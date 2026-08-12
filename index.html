@@ -304,6 +304,25 @@
             border: 1px solid rgba(255,255,255,0.8);
         }
 
+        .wheel-base-badge {
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            bottom: -190px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 0;
+            background:
+                url("https://sesisaudedf.org.br/wp-content/uploads/2024/02/ss_LogoSemBox_new.svg") center center / contain no-repeat;
+            border: none;
+            box-shadow: none;
+            z-index: 12;
+            overflow: visible;
+            filter: saturate(1.02) contrast(1.04);
+            background-color: transparent;
+            opacity: 1;
+        }
+
         .stand-base {
             position: absolute;
             width: 270px;
@@ -525,11 +544,11 @@
         .message-popup {
             position: relative;
             background: rgba(255, 255, 255, 0.96);
-            border-radius: 26px;
-            padding: 32px 30px 26px;
-            max-width: 440px;
-            width: 100%;
-            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.2);
+            border-radius: 30px;
+            padding: 34px 38px 28px;
+            max-width: 760px;
+            width: min(92vw, 760px);
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
             text-align: center;
             color: var(--primary-color);
             border: 1px solid rgba(148, 163, 184, 0.18);
@@ -543,7 +562,7 @@
         }
 
         .message-popup::before {
-            content: "✦";
+            content: "";
             position: absolute;
             right: 18px;
             bottom: 16px;
@@ -555,23 +574,26 @@
         }
 
         .message-popup h4 {
-            margin-bottom: 14px;
-            font-size: clamp(2.2rem, 3vw, 3.3rem);
-            letter-spacing: -0.05em;
+            margin-bottom: 18px;
+            font-size: clamp(2.2rem, 3.5vw, 4.6rem);
+            letter-spacing: -0.07em;
             font-weight: 900;
             position: relative;
             z-index: 1;
-            line-height: 0.95;
+            line-height: 0.96;
         }
 
         .message-popup p {
             margin-bottom: 0;
-            font-size: clamp(1.1rem, 1.3vw, 1.5rem);
-            line-height: 1.5;
+            font-size: clamp(1.2rem, 1.8vw, 2rem);
+            line-height: 1.35;
             color: #374151;
             position: relative;
             z-index: 1;
             font-weight: 600;
+            max-width: 620px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .message-popup-countdown {
@@ -805,7 +827,6 @@
             <h1>Roleta - Conecta Saúde Mental</h1>
             <div class="score-board">
                 <div class="score-level">
-                    <span class="score-badge-icon">✦</span>
                     <span>Nível</span>
                 </div>
                 <strong id="score-level">1</strong>
@@ -837,6 +858,7 @@
                     <div class="wheel-stand" aria-hidden="true">
                         <div class="stand-shaft"></div>
                         <div class="stand-base"></div>
+                        <div class="wheel-base-badge"></div>
                     </div>
                     <div class="wheel-container">
                         <div class="pointer"></div>
@@ -1126,33 +1148,33 @@
 
             const variants = {
                 success: {
-                    titles: ["Parabéns! ✨", "Excelente! 🎉", "Mandou bem! 🏆", "Você arrasou! ⭐", "Sensacional! 🔥", "Show! 🚀"],
+                    titles: ["Você está no caminho!", "Bem-estar em ação!", "Mais um passo de saúde!", "Cuidar de si faz a diferença!", "Foco no bem-estar!", "Você está brilhando!"],
                     texts: [
-                        "Você acertou e deixou a plateia com cara de surpresa!",
-                        "Resposta certa! Você está em ritmo perfeito.",
-                        "Boa jogada! Esse ponto foi seu.",
-                        "Acertou de primeira! Continue nessa energia.",
-                        "Ótima escolha! Você está mantendo o momentum.",
-                        "Isso aí! Mais um ponto para você."
+                        "A saúde cresce com pequenas escolhas e muita atenção ao seu bem-estar.",
+                        "Resposta certa! Você está fortalecendo hábitos que cuidam da sua vida.",
+                        "Boa decisão! Cada conquista conta para o seu bem-estar.",
+                        "A saúde é um movimento diário, e você está no caminho certo.",
+                        "Excelente! Continue investindo em cuidado, equilíbrio e qualidade de vida.",
+                        "Seu bem-estar cresce com cada escolha consciente."
                     ]
                 },
                 error: {
-                    titles: ["Ops! 😅", "Quase lá! 💪", "Poxa! 😬", "Não foi dessa vez! 🔁", "Falta pouco! 🎯", "Tente outra! ✨"],
+                    titles: ["Falta pouco!", "Recomece com foco!", "O bem-estar pede persistência!", "A saúde também é treino!", "Ainda dá para virar o jogo!", "Continue cuidando de você!"],
                     texts: [
-                        "Você errou, mas o próximo giro pode ser o da vitória.",
-                        "Foi por pouco! A próxima tentativa vai valer mais.",
-                        "Não desanime: o aprendizado já começou.",
-                        "Ainda dá para recuperar e mandar bem.",
-                        "Tá quase lá! Continue focado.",
-                        "A resposta certa está na sua próxima tentativa."
+                        "Nem toda resposta acerta de primeira, mas o cuidado com a saúde é um compromisso que vale seguir.",
+                        "Foi por pouco! A próxima escolha pode fazer toda a diferença para o seu bem-estar.",
+                        "A saúde é construída com atenção, persistência e pequenas ações diárias.",
+                        "Ainda dá para recuperar o ritmo e seguir cuidando melhor de você.",
+                        "Cada tentativa conta. O importante é seguir em movimento pela sua saúde.",
+                        "A resposta certa está no próximo passo. Cuide do seu bem-estar com atenção."
                     ]
                 },
                 info: {
-                    titles: ["Aviso! 💡", "Atenção! 📌", "Dica! ✅"],
+                    titles: ["Cuide do seu bem-estar!", "A saúde merece atenção!", "Seu próximo passo importa!"],
                     texts: [
-                        "A dinâmica continua em alta.",
-                        "Fique atento ao próximo giro.",
-                        "Uma nova rodada vai começar em breve."
+                        "Pequenas atitudes fazem grande diferença para a sua qualidade de vida.",
+                        "A saúde começa com escolhas conscientes e constantes.",
+                        "Aproveite cada oportunidade para reforçar o cuidado com você."
                     ]
                 }
             };
