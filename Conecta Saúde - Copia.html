@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roleta - Conecta Saúde Mental</title>
+    <!-- Biblioteca para o Efeito de Confetes -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #27ae60;
+            --danger-color: #e74c3c;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at top, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.2) 18%, transparent 30%),
+                linear-gradient(180deg, #edf4f2 0%, #dfeae8 100%);
+            color: #1d2b36;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            max-height: 100vh;
+            padding: 18px 24px 18px;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 20% 15%, rgba(46, 204, 113, 0.10), transparent 18%),
+                        radial-gradient(circle at 80% 20%, rgba(52, 152, 219, 0.10), transparent 18%),
+                        radial-gradient(circle at 60% 80%, rgba(155, 89, 182, 0.08), transparent 18%);
+            pointer-events: none;
+        }
+
+        .game-shell {
+            width: min(100%, 1450px);
+            height: calc(100vh - 38px);
+            max-height: 100vh;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 8px 18px 12px;
+            z-index: 1;
+            overflow: visible;
+        }
+
+        .game-shell::before {
+            content: "";
+            display: none;
+        }
+
+        .top-bar {
+            width: 100%;
+            position: relative;
+            min-height: 64px;
+            margin-bottom: 18px;
+        }
+
+        h1 {
+            color: #1f2d3d;
+            font-size: clamp(2.5rem, 3vw, 4rem);
+            letter-spacing: -0.06em;
+            font-weight: 900;
+            text-shadow: 0 4px 0 rgba(255,255,255,0.5), 0 12px 24px rgba(31,45,61,0.12);
+            margin: 0;
+            text-align: center;
+            line-height: 1.05;
+            position: relative;
+            display: block;
+            width: 100%;
+        }
+
+        h1::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: -10px;
+            transform: translateX(-50%);
+            width: 110px;
+            height: 6px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #22c55e, #3b82f6);
+            box-shadow: 0 8px 18px rgba(59, 130, 246, 0.2);
+        }
+
+        .score-board {
+            position: absolute;
+            top: 8px;
+            right: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            min-width: 168px;
+            padding: 8px 14px 10px;
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(233,255,243,0.96));
+            border: 2px solid rgba(39, 174, 96, 0.22);
+            box-shadow: 0 10px 22px rgba(25, 81, 64, 0.1), inset 0 1px 0 rgba(255,255,255,0.95);
+            animation: floatBadge 2.8s ease-in-out infinite alternate;
+            white-space: nowrap;
+            transform: translateY(0);
+        }
+
+        .score-level {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 0.68rem;
+            font-weight: 900;
+            color: #0d7a4b;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            line-height: 1;
+        }
+
+        .score-level .score-badge-icon {
+            font-size: 1.2em;
+            filter: drop-shadow(0 2px 4px rgba(253, 201, 36, 0.42));
+        }
+
+        .score-level strong {
+            display: block;
+            font-size: 2.4rem;
+            line-height: 0.9;
+            letter-spacing: -0.08em;
+            color: #102130;
+            min-width: 0.8em;
+            text-align: center;
+        }
+
+        .score-stars {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            min-height: 18px;
+            font-size: 1.05rem;
+            letter-spacing: 0.04em;
+            color: #f4b400;
+            text-shadow: 0 3px 8px rgba(244, 180, 0, 0.26);
+            line-height: 1;
+        }
+
+        .score-stars .filled {
+            color: #f4b400;
+            filter: drop-shadow(0 2px 3px rgba(244, 180, 0, 0.35));
+        }
+
+        .score-stars .empty {
+            color: rgba(148, 163, 184, 0.7);
+        }
+
+        @keyframes floatBadge {
+            from { transform: translateY(0); }
+            to { transform: translateY(-4px); }
+        }
+
+        .control-cluster {
+            position: fixed;
+            left: 24px;
+            bottom: 22px;
+            width: 340px;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: rgba(255,255,255,0.32);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.40);
+            border-radius: 24px;
+            padding: 14px;
+            box-shadow: 0 16px 32px rgba(25, 44, 58, 0.12);
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .right-panel {
+            position: fixed;
+            right: 24px;
+            bottom: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 240px;
+            z-index: 21;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            padding: 4px;
+            background: rgba(15, 23, 42, 0.04);
+            border-radius: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.18);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 14px;
+            font-size: 0.96rem;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.25s ease;
+            font-weight: 800;
+            color: #2d3a40;
+            min-width: 0;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #1f2d3b 0%, #324d63 100%);
+            color: white;
+            box-shadow: 0 10px 20px rgba(31,45,59,0.18);
+        }
+
+        .game-layout {
+            width: 100%;
+            height: calc(100vh - 230px);
+            min-height: 0;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-top: 12px;
+            padding-bottom: 18px;
+            position: relative;
+            overflow: visible;
+        }
+
+        .wheel-panel {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            margin: 0 auto;
+        }
+
+        .wheel-scene {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: min(68vmin, 760px);
+            height: min(68vmin, 760px);
+            max-width: calc(100vw - 180px);
+            max-height: calc(100vh - 260px);
+            margin-top: 20px;
+            transform: translateY(10px);
+            overflow: visible;
+        }
+
+        .wheel-stand {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .stand-shaft {
+            position: absolute;
+            width: 28px;
+            height: 420px;
+            bottom: -88px;
+            background: linear-gradient(180deg, #eef3f6 0%, #9caab6 30%, #5f6e7d 100%);
+            border-radius: 0;
+            box-shadow: inset 0 2px 8px rgba(255,255,255,0.75), 0 12px 22px rgba(42, 52, 61, 0.12);
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+
+        .wheel-base-badge {
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            bottom: -190px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 0;
+            background:
+                url("https://sesisaudedf.org.br/wp-content/uploads/2024/02/ss_LogoSemBox_new.svg") center center / contain no-repeat;
+            border: none;
+            box-shadow: none;
+            z-index: 12;
+            overflow: visible;
+            filter: saturate(1.02) contrast(1.04);
+            background-color: transparent;
+            opacity: 1;
+        }
+
+        .stand-base {
+            position: absolute;
+            width: 270px;
+            height: 68px;
+            bottom: -150px;
+            background: linear-gradient(180deg, #eff3f5 0%, #cdd6dc 100%);
+            border-radius: 0;
+            border: 1px solid rgba(255,255,255,0.8);
+            box-shadow: inset 0 2px 8px rgba(255,255,255,0.75), 0 12px 22px rgba(42, 52, 61, 0.12);
+        }
+
+        .tab-content {
+            display: none;
+            width: 100%;
+            max-width: 100%;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        .wheel-container {
+            position: relative;
+            margin: 10px auto 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform: translateX(0);
+            margin-left: auto;
+            margin-right: auto;
+            left: 0;
+            right: 0;
+        }
+
+        #wheel {
+            width: min(68vmin, 760px);
+            height: min(68vmin, 760px);
+            max-width: calc(100vw - 180px);
+            max-height: calc(100vh - 260px);
+            border-radius: 50%;
+            box-shadow: 0 28px 52px rgba(31,48,63,0.18), inset 0 0 0 4px rgba(255,255,255,0.42);
+            border: 8px solid rgba(255,255,255,0.82);
+            background: #fff;
+            transition: transform 0.18s ease;
+        }
+
+        .pointer {
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 52px;
+            height: 64px;
+            background: linear-gradient(180deg, #d93a2f 0%, #b71c1c 100%);
+            clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+            border: 4px solid rgba(38, 20, 20, 0.16);
+            border-bottom: none;
+            z-index: 10;
+            box-shadow: 0 10px 18px rgba(183,28,28,0.28), 0 0 0 2px rgba(255,255,255,0.22);
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .controls button.action-btn {
+            width: auto;
+            min-width: 140px;
+            padding: 16px 20px;
+            font-size: clamp(1rem, 1.3vw, 1.4rem);
+            font-weight: 800;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+            box-shadow: 0 12px 22px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        .controls button.action-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.04);
+        }
+
+        .btn-spin {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            box-shadow: 0 16px 28px rgba(34, 197, 94, 0.28);
+        }
+        .btn-spin:hover { background: linear-gradient(135deg, #34d399 0%, #1f9d55 100%); }
+        .btn-spin:disabled { background: #c9d4d0; cursor: not-allowed; transform: none; }
+
+        .text-reset {
+            background: transparent;
+            border: none;
+            color: #d93025;
+            box-shadow: none;
+            padding: 0;
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            text-decoration-thickness: 2px;
+            cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            align-self: center;
+            white-space: nowrap;
+        }
+
+        .text-reset:hover {
+            opacity: 0.8;
+            transform: translateY(-1px);
+        }
+
+        /* Estilos do Modal de Perguntas */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.68);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: linear-gradient(145deg, #ffffff 0%, #f4fbff 100%);
+            padding: 30px 28px 26px;
+            border-radius: 24px;
+            max-width: 560px;
+            width: 90%;
+            box-shadow: 0 28px 60px rgba(15, 23, 42, 0.26);
+            text-align: left;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .modal-content h3 {
+            color: var(--primary-color);
+            margin-bottom: 14px;
+            font-size: clamp(1.4rem, 1.8vw, 1.9rem);
+            border-bottom: 2px solid rgba(148, 163, 184, 0.18);
+            padding-bottom: 10px;
+            letter-spacing: -0.04em;
+            font-weight: 800;
+        }
+
+        .modal-content p {
+            margin-bottom: 20px;
+            font-size: clamp(1.05rem, 1.2vw, 1.35rem);
+            font-weight: 700;
+            line-height: 1.5;
+            color: #1f2937;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            padding: 14px 16px;
+            border: 2px solid rgba(148, 163, 184, 0.35);
+            border-radius: 14px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            text-align: left;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1f2937;
+            transition: all 0.25s ease;
+            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: rgba(39, 174, 96, 0.8);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(39, 174, 96, 0.12);
+            background: linear-gradient(180deg, #f8fffb 0%, #eefcf4 100%);
+        }
+
+        /* Estilos para Acerto e Erro */
+        .option-btn.correct {
+            background: linear-gradient(135deg, #27ae60 0%, #1c9c5d 100%) !important;
+            border-color: #27ae60 !important;
+            color: white !important;
+            font-weight: 800;
+        }
+
+        .option-btn.wrong {
+            background: linear-gradient(135deg, #e74c3c 0%, #c63e31 100%) !important;
+            border-color: #e74c3c !important;
+            color: white !important;
+            font-weight: 800;
+        }
+
+        /* Popup de Mensagem */
+        .message-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.65);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 110;
+            padding: 20px;
+        }
+
+        .message-popup {
+            position: relative;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 30px;
+            padding: 34px 38px 28px;
+            max-width: 760px;
+            width: min(92vw, 760px);
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+            text-align: center;
+            color: var(--primary-color);
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            overflow: hidden;
+            animation: popupIn 0.25s ease;
+        }
+
+        @keyframes popupIn {
+            from { opacity: 0; transform: translateY(12px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .message-popup::before {
+            content: "";
+            position: absolute;
+            right: 18px;
+            bottom: 16px;
+            font-size: 4rem;
+            opacity: 0.12;
+            transform: rotate(12deg);
+            pointer-events: none;
+            color: #7c8ea5;
+        }
+
+        .message-popup h4 {
+            margin-bottom: 18px;
+            font-size: clamp(2.2rem, 3.5vw, 4.6rem);
+            letter-spacing: -0.07em;
+            font-weight: 900;
+            position: relative;
+            z-index: 1;
+            line-height: 0.96;
+        }
+
+        .message-popup p {
+            margin-bottom: 0;
+            font-size: clamp(1.2rem, 1.8vw, 2rem);
+            line-height: 1.35;
+            color: #374151;
+            position: relative;
+            z-index: 1;
+            font-weight: 600;
+            max-width: 620px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .message-popup-countdown {
+            display: none;
+        }
+
+        .message-popup button {
+            display: none;
+            padding: 12px 26px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-color) 0%, #1abc9c 100%);
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 8px 18px rgba(39, 174, 96, 0.25);
+        }
+
+        .message-popup button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(39, 174, 96, 0.3);
+        }
+
+        .message-popup.success h4 {
+            color: #27ae60;
+        }
+
+        .message-popup.error h4 {
+            color: #e74c3c;
+        }
+
+        .message-popup.info h4 {
+            color: #2c3e50;
+        }
+
+        .confirm-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(17, 24, 39, 0.65);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 120;
+            padding: 20px;
+        }
+
+        .confirm-popup {
+            background: linear-gradient(135deg, #ffffff 0%, #eef8ff 100%);
+            border-radius: 22px;
+            max-width: 440px;
+            width: 100%;
+            padding: 28px 24px 20px;
+            box-shadow: 0 18px 40px rgba(0,0,0,0.24);
+            border: 3px solid rgba(52, 152, 219, 0.15);
+            text-align: center;
+        }
+
+        .confirm-popup h4 {
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            font-size: clamp(1.5rem, 2vw, 2rem);
+            letter-spacing: -0.04em;
+            font-weight: 800;
+        }
+
+        .confirm-popup p {
+            color: #4a5568;
+            margin-bottom: 22px;
+            font-size: 1.08rem;
+            line-height: 1.5;
+        }
+
+        .confirm-actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .confirm-actions button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .confirm-actions button:hover {
+            transform: translateY(-1px);
+        }
+
+        .confirm-cancel {
+            background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
+            color: #334155;
+            box-shadow: 0 8px 16px rgba(148, 163, 184, 0.16);
+        }
+
+        .confirm-ok {
+            background: linear-gradient(135deg, var(--danger-color) 0%, #c0392b 100%);
+            color: white;
+            box-shadow: 0 8px 18px rgba(231, 76, 60, 0.22);
+        }
+
+        /* Estilos do Rank */
+        #rank-tab {
+            width: min(100%, 1280px);
+            margin: 14px auto 0;
+            padding: 0 12px;
+        }
+
+        .rank-list {
+            width: 100%;
+            background: rgba(255,255,255,0.82);
+            border-radius: 22px;
+            padding: 12px 14px;
+            box-shadow: inset 0 0 0 1px rgba(148,163,184,0.2), 0 12px 24px rgba(15, 23, 42, 0.04);
+            list-style: none;
+            margin: 0 0 16px;
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            backdrop-filter: blur(4px);
+            min-height: 120px;
+        }
+
+        .rank-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(248,250,252,0.9));
+            margin-bottom: 10px;
+            font-size: 1.04rem;
+            font-weight: 700;
+            color: #334155;
+        }
+
+        .rank-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .rank-item-main {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+
+        .rank-item span.pos {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 42px;
+            height: 30px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(59,130,246,0.08));
+            font-weight: 900;
+            color: #0f172a;
+            padding: 0 8px;
+        }
+
+        .rank-item .rank-name {
+            font-weight: 800;
+            color: #1e293b;
+        }
+
+        .rank-detail {
+            color: #475569;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .rank-stars {
+            color: #f59e0b;
+            letter-spacing: 0.08em;
+            font-size: 0.95rem;
+        }
+
+        .rank-item small {
+            color: #64748b;
+            font-weight: 700;
+            font-size: 0.78rem;
+        }
+
+        .rank-actions {
+            display: flex;
+            justify-content: flex-end;
+            width: 100%;
+            margin-top: 6px;
+        }
+
+        .btn-reset {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 168px;
+            padding: 12px 20px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            border-radius: 14px;
+            background: linear-gradient(180deg, #ffffff 0%, #f4f7fb 100%);
+            color: #475569;
+            font-size: 0.98rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            box-shadow: 0 7px 18px rgba(15, 23, 42, 0.06);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .btn-reset:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 22px rgba(15, 23, 42, 0.09);
+            border-color: rgba(100, 116, 139, 0.45);
+        }
+
+        .btn-reset:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-shell">
+        <div class="top-bar">
+            <h1>Roleta - Conecta Saúde Mental</h1>
+            <div class="score-board">
+                <div class="score-level">
+                    <span>Nível</span>
+                </div>
+                <strong id="score-level">1</strong>
+                <span id="score-display" class="score-stars">☆☆☆☆☆</span>
+            </div>
+        </div>
+
+        <div class="left-panel">
+            <div class="control-cluster">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('spin-tab')">Roleta</button>
+                    <button class="tab-btn" onclick="switchTab('rank-tab')">Rank</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="controls">
+                <button id="spin-btn" class="action-btn btn-spin" onclick="spinWheel()">Iniciar</button>
+                <button type="button" class="text-reset" onclick="resetGame(true)">Reiniciar</button>
+            </div>
+        </div>
+
+    <!-- Aba Girar -->
+    <div id="spin-tab" class="tab-content active">
+        <div class="game-layout">
+            <div class="wheel-panel">
+                <div class="wheel-scene">
+                    <div class="wheel-stand" aria-hidden="true">
+                        <div class="stand-shaft"></div>
+                        <div class="stand-base"></div>
+                        <div class="wheel-base-badge"></div>
+                    </div>
+                    <div class="wheel-container">
+                        <div class="pointer"></div>
+                        <canvas id="wheel" width="400" height="400"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aba Rank -->
+    <div id="rank-tab" class="tab-content">
+        <ul class="rank-list" id="rank-list-container">
+            <!-- Ranking carregado via JS -->
+        </ul>
+        <div class="rank-actions">
+            <button class="btn-reset" onclick="clearRank()">Zerar Rank</button>
+        </div>
+    </div>
+
+    <!-- Modal de Pergunta -->
+    <div class="modal-overlay" id="quiz-modal">
+        <div class="modal-content">
+            <h3 id="modal-category">Categoria</h3>
+            <p id="modal-question">Pergunta aqui...</p>
+            <div class="options-container" id="modal-options">
+                <!-- Opções aqui -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Popup de Mensagem -->
+    <div class="message-popup-overlay" id="message-popup-overlay">
+        <div class="message-popup" id="message-popup">
+            <div class="message-popup-countdown" id="message-popup-countdown">Fechando em 5s</div>
+            <h4 id="message-popup-title">Aviso</h4>
+            <p id="message-popup-text">Texto da mensagem</p>
+            <button type="button" onclick="closeMessagePopup()">OK</button>
+        </div>
+    </div>
+
+    <!-- Popup de Confirmação -->
+    <div class="confirm-popup-overlay" id="confirm-popup-overlay">
+        <div class="confirm-popup" id="confirm-popup">
+            <h4 id="confirm-popup-title">Confirmação</h4>
+            <p id="confirm-popup-text">Deseja continuar?</p>
+            <div class="confirm-actions">
+                <button type="button" class="confirm-cancel" onclick="closeConfirmPopup(false)">Não</button>
+                <button type="button" class="confirm-ok" onclick="closeConfirmPopup(true)">Sim</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dados das categorias e perguntas
+        const categoriesData = [
+            {
+                name: "Estresse",
+                color: "#e74c3c",
+                questions: [
+                    { q: "Qual hormônio é conhecido como “hormônio do estresse”?", options: ["A) Insulina", "B) Cortisol", "C) Melatonina", "D) Adrenalina"], answer: 1 },
+                    { q: "Qual destes pode ser um sintoma físico relacionado ao estresse intenso?", options: ["A) Tensão muscular", "B) Melhora da concentração", "C) Aumento da disposição", "D) Sono sempre mais tranquilo"], answer: 0 },
+                    { q: "Qual atitude pode ajudar a reduzir o estresse?", options: ["A) Manter-se ocupado para não pensar nos problemas", "B) Evitar todas as situações que geram desconforto", "C) Combinar sono adequado, atividade física, descanso e momentos de lazer", "D) Aumentar o consumo de café para melhorar a disposição"], answer: 2 },
+                    { q: "Quando o estresse se torna difícil de controlar, o mais indicado é:", options: ["A) Ignorar os sintomas", "B) Isolar-se", "C) Pedir ajuda e, quando necessário, procurar um profissional", "D) Aumentar o consumo de café"], answer: 2 },
+                    { q: "Procurar ajuda psicológica significa que a pessoa não conseguiu lidar sozinha com seus problemas?", options: ["A) Sim, sempre", "B) Sim, quando o problema é grave", "C) Não. Buscar ajuda também é uma forma de cuidado", "D) Não, mas apenas em casos extremos"], answer: 2 }
+                ]
+            },
+            {
+                name: "Ansiedade",
+                color: "#e67e22",
+                questions: [
+                    { q: "Qual destes NÃO é um sintoma comum de ansiedade?", options: ["A) Preocupação excessiva com o futuro", "B) Medo ou sensação de perigo", "C) Tensão muscular e dificuldade de relaxar", "D) Aumento da sensação de segurança diante de situações ameaçadoras"], answer: 3 },
+                    { q: "Qual é a diferença básica entre medo e ansiedade?", options: ["A) Não existe diferença", "B) O medo está ligado a um perigo presente; a ansiedade, à antecipação de possíveis perigos", "C) O medo sempre é mais intenso que a ansiedade", "D) A ansiedade acontece apenas quando existe perigo real"], answer: 1 },
+                    { q: "Quando pode ser importante procurar ajuda profissional para lidar com a ansiedade?", options: ["A) Apenas quando a pessoa não sente nenhuma preocupação", "B) Quando a ansiedade é intensa ou persistente e interfere na vida cotidiana", "C) Sempre que a pessoa sentir ansiedade uma única vez", "D) Somente quando houver sintomas físicos"], answer: 1 },
+                    { q: "Sobre evitar situações que provocam ansiedade, é correto afirmar que:", options: ["A) A evitação sempre ajuda a reduzir a ansiedade de forma duradoura.", "B) Evitar situações que causam ansiedade pode aliviar o desconforto no momento, mas contribuir para a manutenção ou aumento do medo.", "C) Enfrentar diretamente qualquer situação que provoque ansiedade é sempre a melhor estratégia.", "D) A evitação não interfere na forma como a ansiedade se mantém ao longo do tempo."], answer: 1 },
+                    { q: "Sentir ansiedade ocasionalmente significa ter um transtorno de ansiedade?", options: ["A) Verdadeiro", "B) Falso"], answer: 1 }
+                ]
+            },
+            {
+                name: "Burnout",
+                color: "#f1c40f",
+                questions: [
+                    { q: "Burnout é simplesmente estar cansado depois de um dia difícil de trabalho?", options: ["A) Verdadeiro", "B) Falso"], answer: 1 },
+                    { q: "Qual é uma das principais características do burnout?", options: ["A) Sensação persistente de esgotamento associada ao trabalho", "B) Períodos pontuais de cansaço após atividades profissionais intensas", "C) Maior necessidade de descanso após uma semana de trabalho", "D) Redução temporária da motivação diante de uma tarefa específica"], answer: 0 },
+                    { q: "Uma pessoa pode estar em burnout mesmo gostando do seu trabalho?", options: ["A) Verdadeiro", "B) Falso"], answer: 0 },
+                    { q: "Qual situação pode aumentar o risco de esgotamento no trabalho?", options: ["A) Alta demanda de tarefas combinada com pouca possibilidade de recuperação", "B) Alternância entre períodos de maior e menor demanda", "C) Disponibilidade de apoio para lidar com situações mais complexas", "D) Organização das atividades de acordo com as prioridades"], answer: 0 },
+                    { q: "Se uma pessoa estiver sofrendo por questões relacionadas ao trabalho, a terapia resolve sozinha os problemas do ambiente de trabalho?", options: ["A) Sim, porque a terapia resolve a causa do problema", "B) Sim, desde que a pessoa esteja motivada", "C) Não. A terapia pode ajudar, mas também podem ser necessárias mudanças nas condições de trabalho", "D) Não, porque a terapia não ajuda em questões relacionadas ao trabalho"], answer: 2 },
+                    { q: "Quem deve participar da prevenção do burnout?", options: ["A) Apenas o trabalhador", "B) Apenas a organização", "C) Trabalhador e organização", "D) Apenas o profissional de saúde mental"], answer: 2 }
+                ]
+            },
+            {
+                name: "Autocuidado",
+                color: "#2ecc71",
+                questions: [
+                    { q: "Qual das situações abaixo representa uma prática de autocuidado que pode ser incorporada à rotina sem necessariamente envolver gastos?", options: ["A) Separar um tempo para descansar, caminhar ou conversar com alguém de confiança", "B) Fazer uma atividade de lazer somente quando estiver de férias", "C) Comprar produtos para cuidar da saúde e do bem-estar", "D) Evitar todas as situações que causem cansaço ou preocupação"], answer: 0 },
+                    { q: "Por que estabelecer limites pode ser uma forma de autocuidado?", options: ["A) Porque impede situações desagradáveis", "B) Porque permite evitar suas responsabilidades", "C) Porque ajuda a evitar sobrecarga e preservar o bem-estar", "D) Porque faz com que ninguém possa discordar de você"], answer: 2 },
+                    { q: "Qual alternativa reúne apenas atitudes que podem contribuir para o autocuidado?", options: ["A) Dormir bem, respeitar os próprios limites e reservar momentos para si", "B) Manter uma rotina produtiva, mesmo quando estiver muito cansado, e adiar o descanso", "C) Priorizar as necessidades dos outros e deixar o próprio bem-estar para depois", "D) Evitar situações que gerem desconforto e reduzir o contato com outras pessoas"], answer: 0 },
+                    { q: "Pedir ajuda quando necessário pode ser considerado autocuidado?", options: ["A) Sim", "B) Não"], answer: 0 },
+                    { q: "Autocuidado significa fazer apenas aquilo que nos dá prazer?", options: ["A) Verdadeiro", "B) Falso"], answer: 1 }
+                ]
+            },
+            {
+                name: "Emoções",
+                color: "#9b59b6",
+                questions: [
+                    { q: "É preciso estar em uma situação grave para procurar terapia?", options: ["A) Sim, sempre", "B) Sim, somente quando há sintomas físicos", "C) Não. A terapia também pode ajudar em dificuldades, mudanças, estresse, ansiedade e autoconhecimento", "D) Sim, porque terapia é apenas para crises"], answer: 2 },
+                    { q: "Qual é uma forma saudável de lidar com uma emoção difícil?", options: ["A) Ignorar o que está sentindo", "B) Recorrer a compras ou comida para tentar se sentir melhor", "C) Conversar com alguém de confiança ou escrever sobre o que está sentindo", "D) Evitar pensar sobre o assunto"], answer: 2 },
+                    { q: "Todas as emoções são importantes, mesmo aquelas que consideramos negativas?", options: ["A) Verdadeiro", "B) Falso"], answer: 0 },
+                    { q: "Qual é uma das funções básicas das emoções?", options: ["A) Impedir que tenhamos problemas", "B) Ajudar-nos a perceber e responder ao que acontece conosco e ao nosso ambiente", "C) Fazer com que estejamos felizes o tempo todo", "D) Evitar qualquer situação desconfortável"], answer: 1 },
+                    { q: "Sentir tristeza, raiva ou medo significa que há algo errado com a pessoa?", options: ["A) Verdadeiro", "B) Falso"], answer: 1 }
+                ]
+            },
+            {
+                name: "Sono & Saúde",
+                color: "#3498db",
+                questions: [
+                    { q: "Quantas horas de sono, aproximadamente, um adulto precisa por noite?", options: ["A) 3 a 4 horas", "B) 5 a 6 horas", "C) 7 a 9 horas", "D) 10 a 12 horas"], answer: 2 },
+                    { q: "Qual hormônio está relacionado à regulação do sono?", options: ["A) Cortisol", "B) Insulina", "C) Melatonina", "D) Adrenalina"], answer: 2 },
+                    { q: "Qual pode ser uma consequência de dormir pouco?", options: ["A) A necessidade de descanso, que tende a diminuir com o tempo", "B) A capacidade de lidar com situações estressantes, que tende a melhorar", "C) A disposição ao longo do dia, que tende a aumentar mesmo com poucas horas de sono", "D) A capacidade de manter a atenção e o humor ao longo do dia"], answer: 3 },
+                    { q: "O que pode atrapalhar a qualidade do sono antes de dormir?", options: ["A) Ambiente tranquilo", "B) Rotina regular de sono", "C) Excesso de telas e consumo de cafeína", "D) Relaxamento"], answer: 2 },
+                    { q: "Dormir bem contribui para a regulação emocional?", options: ["A) Verdadeiro", "B) Falso"], answer: 0 }
+                ]
+            }
+        ];
+
+        // Estado do Jogo
+        let activeQuestions = {};
+        let currentScore = 0;
+        let isSpinning = false;
+        let startAngle = 0;
+        let spinTimeout = null;
+        let spinAngleStart = 0;
+        let spinTime = 0;
+        let spinTimeTotal = 0;
+
+        const canvas = document.getElementById("wheel");
+        const ctx = canvas.getContext("2d");
+        const spinBtn = document.getElementById("spin-btn");
+
+        // Inicialização
+        function initGame() {
+            activeQuestions = JSON.parse(JSON.stringify(categoriesData));
+            spinBtn.textContent = "Iniciar";
+            drawWheel();
+            updateScoreDisplay();
+            updateRankTable();
+        }
+
+        // Desenhar a Roleta
+        function drawWheel() {
+            const numSlices = categoriesData.length;
+            const sliceAngle = (2 * Math.PI) / numSlices;
+            const radius = canvas.width / 2;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            categoriesData.forEach((cat, i) => {
+                const angle = startAngle + i * sliceAngle;
+                
+                // Desenhar Fatia
+                ctx.beginPath();
+                ctx.fillStyle = cat.color;
+                ctx.moveTo(radius, radius);
+                ctx.arc(radius, radius, radius, angle, angle + sliceAngle);
+                ctx.lineTo(radius, radius);
+                ctx.fill();
+
+                // Desenhar Texto
+                ctx.save();
+                ctx.fillStyle = "white";
+                ctx.font = "bold 14px Segoe UI";
+                ctx.translate(radius + Math.cos(angle + sliceAngle / 2) * (radius - 70), radius + Math.sin(angle + sliceAngle / 2) * (radius - 70));
+                ctx.rotate(angle + sliceAngle / 2 + Math.PI / 2);
+                ctx.fillText(cat.name, -ctx.measureText(cat.name).width / 2, 0);
+                ctx.restore();
+            });
+        }
+
+        // Lógica de Giro
+        function spinWheel() {
+            if (isSpinning) return;
+            
+            const totalQuestionsLeft = activeQuestions.reduce((acc, cat) => acc + cat.questions.length, 0);
+            if(totalQuestionsLeft === 0) {
+                showMessagePopup("Você respondeu TODAS as perguntas do jogo! Parabéns!", "success", () => {
+                    saveScore(currentScore);
+                    resetGame(false);
+                });
+                return;
+            }
+
+            isSpinning = true;
+            spinBtn.disabled = true;
+
+            spinAngleStart = Math.random() * 10 + 10;
+            spinTime = 0;
+            spinTimeTotal = Math.random() * 3000 + 4000;
+            rotateWheel();
+        }
+
+        function rotateWheel() {
+            spinTime += 30;
+            if (spinTime >= spinTimeTotal) {
+                stopRotateWheel();
+                return;
+            }
+            const spinAngle = spinAngleStart - easeOut(spinTime, 0, spinAngleStart, spinTimeTotal);
+            startAngle += (spinAngle * Math.PI / 180);
+            drawWheel();
+            spinTimeout = setTimeout(rotateWheel, 30);
+        }
+
+        function stopRotateWheel() {
+            clearTimeout(spinTimeout);
+            isSpinning = false;
+
+            const numSlices = categoriesData.length;
+            const degrees = startAngle * 180 / Math.PI + 90;
+            const index = Math.floor((360 - (degrees % 360)) / (360 / numSlices));
+            
+            const selectedCategoryIndex = (index + numSlices) % numSlices;
+            openQuestionModal(selectedCategoryIndex);
+        }
+
+        function easeOut(t, b, c, d) {
+            const ts = (t /= d) * t;
+            const tc = ts * t;
+            return b + c * (tc + -3 * ts + 3 * t);
+        }
+
+        // Modal de Pergunta
+        function openQuestionModal(categoryIndex) {
+            const cat = activeQuestions[categoryIndex];
+
+            if (cat.questions.length === 0) {
+                let availableCatIndex = activeQuestions.findIndex(c => c.questions.length > 0);
+                openQuestionModal(availableCatIndex);
+                return;
+            }
+
+            const qIndex = Math.floor(Math.random() * cat.questions.length);
+            const questionData = cat.questions[qIndex];
+
+            document.getElementById("modal-category").innerText = cat.name;
+            document.getElementById("modal-category").style.color = categoriesData[categoryIndex].color;
+            document.getElementById("modal-question").innerText = questionData.q;
+
+            const optionsContainer = document.getElementById("modal-options");
+            optionsContainer.innerHTML = "";
+
+            questionData.options.forEach((opt, idx) => {
+                const btn = document.createElement("button");
+                btn.className = "option-btn";
+                btn.innerText = opt;
+                btn.onclick = (e) => checkAnswer(categoryIndex, qIndex, idx, e.currentTarget);
+                optionsContainer.appendChild(btn);
+            });
+
+            document.getElementById("quiz-modal").style.display = "flex";
+        }
+
+        // Disparar Confetes
+        function triggerConfetti() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+
+        let messagePopupCallback = null;
+        let confirmPopupCallback = null;
+        let messagePopupTimer = null;
+
+        function getRandomVariant(list) {
+            return list[Math.floor(Math.random() * list.length)];
+        }
+
+        function showMessagePopup(message, type = 'info', callback = null) {
+            const overlay = document.getElementById("message-popup-overlay");
+            const popup = document.getElementById("message-popup");
+            const title = document.getElementById("message-popup-title");
+            const text = document.getElementById("message-popup-text");
+            const okButton = popup.querySelector('button');
+
+            const variants = {
+                success: {
+                    titles: ["Você está no caminho!", "Bem-estar em ação!", "Mais um passo de saúde!", "Cuidar de si faz a diferença!", "Foco no bem-estar!", "Você está brilhando!"],
+                    texts: [
+                        "A saúde cresce com pequenas escolhas e muita atenção ao seu bem-estar.",
+                        "Resposta certa! Você está fortalecendo hábitos que cuidam da sua vida.",
+                        "Boa decisão! Cada conquista conta para o seu bem-estar.",
+                        "A saúde é um movimento diário, e você está no caminho certo.",
+                        "Excelente! Continue investindo em cuidado, equilíbrio e qualidade de vida.",
+                        "Seu bem-estar cresce com cada escolha consciente."
+                    ]
+                },
+                error: {
+                    titles: ["Falta pouco!", "Recomece com foco!", "O bem-estar pede persistência!", "A saúde também é treino!", "Ainda dá para virar o jogo!", "Continue cuidando de você!"],
+                    texts: [
+                        "Nem toda resposta acerta de primeira, mas o cuidado com a saúde é um compromisso que vale seguir.",
+                        "Foi por pouco! A próxima escolha pode fazer toda a diferença para o seu bem-estar.",
+                        "A saúde é construída com atenção, persistência e pequenas ações diárias.",
+                        "Ainda dá para recuperar o ritmo e seguir cuidando melhor de você.",
+                        "Cada tentativa conta. O importante é seguir em movimento pela sua saúde.",
+                        "A resposta certa está no próximo passo. Cuide do seu bem-estar com atenção."
+                    ]
+                },
+                info: {
+                    titles: ["Cuide do seu bem-estar!", "A saúde merece atenção!", "Seu próximo passo importa!"],
+                    texts: [
+                        "Pequenas atitudes fazem grande diferença para a sua qualidade de vida.",
+                        "A saúde começa com escolhas conscientes e constantes.",
+                        "Aproveite cada oportunidade para reforçar o cuidado com você."
+                    ]
+                }
+            };
+
+            if (messagePopupTimer) {
+                clearTimeout(messagePopupTimer);
+                messagePopupTimer = null;
+            }
+
+            popup.classList.remove("success", "error", "info");
+            popup.classList.add(type === "error" ? "error" : type === "success" ? "success" : "info");
+
+            const selectedVariant = variants[type] || variants.info;
+            const titleText = getRandomVariant(selectedVariant.titles);
+            const textMessage = message && (type === "success" || type === "error")
+                ? `${message} ${getRandomVariant(selectedVariant.texts)}`
+                : getRandomVariant(selectedVariant.texts);
+
+            title.innerText = titleText;
+            text.innerText = textMessage;
+            messagePopupCallback = callback;
+            okButton.style.display = 'none';
+            overlay.style.display = "flex";
+
+            messagePopupTimer = setTimeout(() => {
+                closeMessagePopup();
+            }, 5000);
+        }
+
+        function closeMessagePopup() {
+            if (messagePopupTimer) {
+                clearTimeout(messagePopupTimer);
+                messagePopupTimer = null;
+            }
+
+            document.getElementById("message-popup-overlay").style.display = "none";
+            if (typeof messagePopupCallback === 'function') {
+                const callback = messagePopupCallback;
+                messagePopupCallback = null;
+                callback();
+            }
+        }
+
+        function showConfirmPopup(message, onConfirm = null, onCancel = null) {
+            const overlay = document.getElementById("confirm-popup-overlay");
+            const text = document.getElementById("confirm-popup-text");
+            text.innerText = message;
+            confirmPopupCallback = { onConfirm, onCancel };
+            overlay.style.display = "flex";
+        }
+
+        function closeConfirmPopup(confirmed) {
+            const overlay = document.getElementById("confirm-popup-overlay");
+            overlay.style.display = "none";
+
+            if (!confirmPopupCallback) return;
+
+            const { onConfirm, onCancel } = confirmPopupCallback;
+            confirmPopupCallback = null;
+
+            if (confirmed && typeof onConfirm === 'function') {
+                onConfirm();
+            } else if (!confirmed && typeof onCancel === 'function') {
+                onCancel();
+            }
+        }
+
+        // Checar Resposta com Feedback Visual (Verde/Vermelho + Confete)
+        function checkAnswer(catIndex, qIndex, selectedOption, buttonEl) {
+            const correctAnswer = activeQuestions[catIndex].questions[qIndex].answer;
+            
+            // Desabilita botões para evitar duplo clique
+            const allOptionBtns = document.querySelectorAll('.option-btn');
+            allOptionBtns.forEach(btn => btn.disabled = true);
+
+            if (selectedOption === correctAnswer) {
+                // Fica verde momentaneamente
+                buttonEl.classList.add('correct');
+                
+                // Lança confete
+                triggerConfetti();
+
+                setTimeout(() => {
+                    document.getElementById("quiz-modal").style.display = "none";
+                    currentScore += 10;
+                    updateScoreDisplay();
+                    showMessagePopup("Você acertou!", "success", () => {
+                        // Remove pergunta
+                        activeQuestions[catIndex].questions.splice(qIndex, 1);
+                        spinBtn.textContent = "Girar novamente";
+                        spinBtn.disabled = false;
+                    });
+                }, 1000); // 1 segundo para apreciar o acerto
+            } else {
+                // Fica vermelho momentaneamente
+                buttonEl.classList.add('wrong');
+                if (allOptionBtns[correctAnswer]) {
+                    allOptionBtns[correctAnswer].classList.add('correct');
+                }
+
+                setTimeout(() => {
+                    document.getElementById("quiz-modal").style.display = "none";
+                    showMessagePopup("Você errou!", "error", () => {
+                        if (currentScore > 0) {
+                            saveScore(currentScore);
+                        }
+                        resetGame(false);
+                    });
+                }, 1200); // 1.2 segundos para ver o erro e a resposta certa
+            }
+        }
+
+        // Gestão da Pontuação e Reinício
+        function updateScoreDisplay() {
+            const scoreDisplay = document.getElementById("score-display");
+            const scoreLevel = document.getElementById("score-level");
+            const level = Math.max(1, Math.floor(currentScore / 10) + 1);
+            const starCount = Math.min(5, Math.max(1, level));
+            const filledStars = starCount;
+            const emptyStars = 0;
+
+            scoreLevel.innerText = level;
+            scoreDisplay.innerHTML = `${'<span class="filled">★</span>'.repeat(filledStars)}${'<span class="empty">☆</span>'.repeat(emptyStars)}`;
+        }
+
+        function resetGame(manualReset = false) {
+            if (manualReset && currentScore > 0) {
+                saveScore(currentScore);
+            }
+            currentScore = 0;
+            updateScoreDisplay();
+            spinBtn.disabled = false;
+            spinBtn.textContent = "Iniciar";
+            initGame();
+        }
+
+        // Sistema de Ranking
+        function getRankData() {
+            return JSON.parse(localStorage.getItem("roleta_saude_mental_rank") || "[]");
+        }
+
+        function getSmartPlayerName() {
+            const storageKey = "roleta_saude_mental_player_alias";
+            const existing = localStorage.getItem(storageKey);
+            if (existing && existing.trim()) {
+                return existing.trim();
+            }
+
+            const aliases = [
+                "Jogador A", "Jogador B", "Jogador C", "Jogador D", "Jogador E",
+                "Atena", "Nova", "Fluxo", "Pérola", "Velocidade", "Rumo", "Zen",
+                "Luna", "Veloz", "Estrela", "Céu", "Rápido", "Mente"
+            ];
+
+            const alias = aliases[Math.floor(Math.random() * aliases.length)];
+            const suffix = Math.floor(Math.random() * 90) + 10;
+            const smartName = `${alias} ${suffix}`;
+            localStorage.setItem(storageKey, smartName);
+            return smartName;
+        }
+
+        function saveScore(score) {
+            if (score === 0) return;
+            let rank = getRankData();
+            const playerName = getSmartPlayerName();
+            rank.push({
+                name: playerName,
+                score: score,
+                date: new Date().toLocaleDateString('pt-BR')
+            });
+            rank.sort((a, b) => b.score - a.score);
+            rank = rank.slice(0, 5);
+            localStorage.setItem("roleta_saude_mental_rank", JSON.stringify(rank));
+            updateRankTable();
+        }
+
+        function updateRankTable() {
+            const rank = getRankData();
+            const container = document.getElementById("rank-list-container");
+            container.innerHTML = "";
+
+            if (rank.length === 0) {
+                container.innerHTML = "<li class='rank-item' style='justify-content:center; color:#475569; font-weight:700; padding:18px 10px;'>Nenhuma pontuação registrada ainda.</li>";
+                return;
+            }
+
+            rank.forEach((item, index) => {
+                const li = document.createElement("li");
+                li.className = "rank-item";
+                const level = Math.max(1, Math.floor((item.score || 0) / 10) + 1);
+                const stars = '★'.repeat(Math.min(5, level)) + '☆'.repeat(Math.max(0, 5 - level));
+                li.innerHTML = `
+                    <div class="rank-item-main">
+                        <span class="pos">${index + 1}º</span>
+                        <span class="rank-name">${item.name || 'Jogador'}</span>
+                        <span class="rank-detail">• ${item.score || 0} pts</span>
+                        <span class="rank-detail">• ${Math.max(1, Math.ceil((item.score || 0) / 10))} acertos</span>
+                        <span class="rank-stars">${stars}</span>
+                    </div>
+                    <small>${item.date}</small>
+                `;
+                container.appendChild(li);
+            });
+        }
+
+        function clearRank() {
+            showConfirmPopup(
+                "Tem certeza que deseja zerar o ranking?",
+                () => {
+                    localStorage.removeItem("roleta_saude_mental_rank");
+                    updateRankTable();
+                }
+            );
+        }
+
+        // Controle de Abas
+        function switchTab(tabId) {
+            document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+            document.querySelectorAll(".tab-content").forEach(content => content.classList.remove("active"));
+
+            if (tabId === 'spin-tab') {
+                document.querySelectorAll(".tab-btn")[0].classList.add("active");
+            } else {
+                document.querySelectorAll(".tab-btn")[1].classList.add("active");
+            }
+            
+            document.getElementById(tabId).classList.add("active");
+        }
+
+        // Inicializa o jogo
+        initGame();
+    </script>
+</body>
+</html>
